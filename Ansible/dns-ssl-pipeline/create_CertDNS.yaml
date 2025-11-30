@@ -1,0 +1,305 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: 'windows-latest'
+
+parameters:
+- name: environment
+  displayName: "Environment"
+  type: string
+  default: Development
+  values:
+  - Development
+  - QA
+  - UAT
+  - Production
+
+- name: var_keyVaultName
+  displayName: "KV name for DNS/SSL/Registration operation"
+  type: string
+  default: ' '
+
+- name: var_sslrequest
+  displayName: "SSL management action required?"
+  type: boolean
+  default: false
+
+- name: sslAction
+  displayName: "Action for SSL Certificate"
+  type: string
+  default: status
+  values:
+  - create
+  - status
+  - revoke
+  - update
+  - renew
+
+- name: sslfqdn
+  displayName: "FQDN for SSL management action"
+  type: string
+  default: ' '
+
+- name: domainName
+  displayName: "Choose domain for SSL management action"
+  type: string
+  default:
+
+- name: var_dnsregistration
+  displayName: "DNS Registration action required?"
+  type: boolean
+  default: false
+
+- name: dnsfqdn
+  displayName: "FQDN for DNS Registration "
+  type: string
+  default: ' '
+
+- name: dnsAction
+  displayName: "Action for DNS Registration"
+  type: string
+  default: add
+  values:
+  - add
+  - remove
+  - update
+  - query
+
+- name: owner
+  displayName: "DevOps Owner for DNS Registration"
+  type: string
+  default: ' '
+
+
+- name: dnsType
+  displayName: "Type for DNS Registration"
+  type: string
+  default: A
+  values:
+  - A
+  - CNAME
+
+- name: AppGWpublic
+  displayName: "App GW / FrontDoor Public IP (A) or FQDN (CNAME) for DNS registration"
+  type: string
+  default: ' '
+
+- name: registration_request
+  displayName: "Web App registration required?"
+  type: boolean
+  default: false
+
+- name: request_type
+  displayName: "Action for the Registration"
+  type: string
+  default: create-update
+  values:
+  - create-update
+  - remove
+
+- name: update_key
+  displayName: "Update key activated. For an UPDATE it should be changed to NO"
+  type: string
+  default: 'Yes'
+  values:
+  - 'Yes'
+  - 'No'
+
+- name: requester_email
+  displayName: "Requester email for Web App Registration"
+  type: string
+  default: ' '
+
+- name: requester_dn
+  displayName: "Enter a display name for the requester"
+  type: string
+  default: ' '
+
+- name: app_environment
+  displayName: "Enter App Registration Environment"
+  type: string
+  default: DEV
+  values:
+  - DEV
+  - QA
+  - UAT
+  - PRD
+
+- name: resourceGroup
+  displayName: "Enter the Resource Group name"
+  type: string
+  default: ' '
+
+- name: display_name
+  displayName: "Display name for the Registration"
+  type: string
+  default: ' '
+
+- name: home_page
+  displayName: "Enter App Home Page. It must be in URI format"
+  type: string
+  default: ' '
+
+- name: reply_page
+  displayName: "Enter Reply Url(s). You can enter a comma-separated string value to add multiple reply URL"
+  type: string
+  default: ' '
+
+- name: permission
+  displayName: "Enter Permission(s). You can enter a comma-separated string value to add multiple permissions. e.g.: Graph:Delegated:User.Read"
+  type: string
+  default: ' '
+
+#- name: ad_groups
+#  displayName: "Azure AD group to assign to the app. Only required for CREATE"
+#  type: string
+#  default: ' '
+
+- name: app_id
+  displayName: "Enter Application ID. Only required for UPDATE and REMOVE"
+  type: string
+  default: ' '
+
+
+stages:
+- stage: Development
+  displayName: Deploy SSL and DNS configurations in DEV
+  condition: and(eq('${{ parameters.environment }}', 'Development'), ne(variables['Build.Reason'], 'PullRequest'))
+  variables:
+  - group: Azure.NON-PROD
+  jobs:
+  - template: templates/deploy-CertDNS.yml
+    parameters:
+      serviceConnection: "SellSide_Azure-NON-PROD"
+      environment: "${{ parameters.environment }}"
+      var_keyVaultName: "${{ parameters.var_keyVaultName }}"
+      var_dnsregistration: "${{ parameters.var_dnsregistration }}"
+      dnsfqdn: "${{ parameters.dnsfqdn }}"
+      dnsAction: "${{ parameters.dnsAction }}"
+      owner: "${{ parameters.owner }}"
+      AppGWpublic: "${{ parameters.AppGWpublic }}"
+      dnsType: ${{ parameters.dnsType }}
+      sslAction: "${{ parameters.sslAction }}"
+      var_sslrequest: "${{ parameters.var_sslrequest }}"
+      sslfqdn: "${{ parameters.sslfqdn }}"
+      requester_email:  "${{ parameters.requester_email }}"
+      requester_dn:  "${{ parameters.requester_dn }}"
+      registration_request:  "${{ parameters.registration_request }}"
+      request_type:  "${{ parameters.request_type }}"
+      display_name:  "${{ parameters.display_name }}"
+      home_page:  "${{ parameters.home_page }}"
+      reply_page:  "${{ parameters.reply_page }}"
+      permission:  "${{ parameters.permission }}"
+      resourceGroup:  "${{ parameters.resourceGroup }}"
+      app_id: "${{ parameters.app_id }}"
+      app_environment: "${{ parameters.app_environment }}"
+      #ad_groups: "${{ parameters.ad_groups }}"
+      update_key: "${{ parameters.update_key }}"
+      domainName: "${{ parameters.domainName }}"
+
+
+- stage: QA
+  displayName: Deploy SSL and DNS configurations in QA
+  condition: and(eq('${{ parameters.environment }}', 'QA'), ne(variables['Build.Reason'], 'PullRequest'))
+  variables:
+  - group: Azure.NON-PROD
+  jobs:
+  - template: templates/deploy-CertDNS.yml
+    parameters:
+      serviceConnection: "SellSide_Azure-NON-PROD"
+      environment: "${{ parameters.environment }}"
+      var_keyVaultName: "${{ parameters.var_keyVaultName }}"
+      var_dnsregistration: "${{ parameters.var_dnsregistration }}"
+      dnsfqdn: "${{ parameters.dnsfqdn }}"
+      dnsAction: "${{ parameters.dnsAction }}"
+      owner: "${{ parameters.owner }}"
+      AppGWpublic: "${{ parameters.AppGWpublic }}"
+      dnsType: ${{ parameters.dnsType }}
+      sslAction: "${{ parameters.sslAction }}"
+      var_sslrequest: "${{ parameters.var_sslrequest }}"
+      sslfqdn: "${{ parameters.sslfqdn }}"
+      requester_email:  "${{ parameters.requester_email }}"
+      requester_dn:  "${{ parameters.requester_dn }}"
+      registration_request:  "${{ parameters.registration_request }}"
+      request_type:  "${{ parameters.request_type }}"
+      display_name:  "${{ parameters.display_name }}"
+      home_page:  "${{ parameters.home_page }}"
+      reply_page:  "${{ parameters.reply_page }}"
+      permission:  "${{ parameters.permission }}"
+      resourceGroup:  "${{ parameters.resourceGroup }}"
+      app_id: "${{ parameters.app_id }}"
+      app_environment: "${{ parameters.app_environment }}"
+      #ad_groups: "${{ parameters.ad_groups }}"
+      update_key: "${{ parameters.update_key }}"
+      domainName: "${{ parameters.domainName }}"
+
+- stage: UAT
+  displayName: Deploy SSL and DNS configurations in UAT
+  condition: and(eq('${{ parameters.environment }}', 'UAT'), ne(variables['Build.Reason'], 'PullRequest'))
+  variables:
+  - group: Azure.NON-PROD
+  jobs:
+  - template: templates/deploy-CertDNS.yml
+    parameters:
+      serviceConnection: "SellSide_Azure-NON-PROD"
+      environment: "${{ parameters.environment }}"
+      var_keyVaultName: "${{ parameters.var_keyVaultName }}"
+      var_dnsregistration: "${{ parameters.var_dnsregistration }}"
+      dnsfqdn: "${{ parameters.dnsfqdn }}"
+      dnsAction: "${{ parameters.dnsAction }}"
+      owner: "${{ parameters.owner }}"
+      AppGWpublic: "${{ parameters.AppGWpublic }}"
+      dnsType: ${{ parameters.dnsType }}
+      sslAction: "${{ parameters.sslAction }}"
+      var_sslrequest: "${{ parameters.var_sslrequest }}"
+      sslfqdn: "${{ parameters.sslfqdn }}"
+      requester_email:  "${{ parameters.requester_email }}"
+      requester_dn:  "${{ parameters.requester_dn }}"
+      registration_request:  "${{ parameters.registration_request }}"
+      request_type:  "${{ parameters.request_type }}"
+      display_name:  "${{ parameters.display_name }}"
+      home_page:  "${{ parameters.home_page }}"
+      reply_page:  "${{ parameters.reply_page }}"
+      permission:  "${{ parameters.permission }}"
+      resourceGroup:  "${{ parameters.resourceGroup }}"
+      app_id: "${{ parameters.app_id }}"
+      app_environment: "${{ parameters.app_environment }}"
+      #ad_groups: "${{ parameters.ad_groups }}"
+      update_key: "${{ parameters.update_key }}"
+      domainName: "${{ parameters.domainName }}"
+
+- stage: Production
+  displayName: Deploy SSL and DNS configurations in PROD
+  condition: and(eq('${{ parameters.environment }}', 'Production'), ne(variables['Build.Reason'], 'PullRequest'))
+  variables:
+  - group: Azure.NON-PROD
+  jobs:
+  - template: templates/deploy-CertDNS.yml
+    parameters:
+      serviceConnection: "SellSide_Azure-NON-PROD"
+      environment: "${{ parameters.environment }}"
+      var_keyVaultName: "${{ parameters.var_keyVaultName }}"
+      var_dnsregistration: "${{ parameters.var_dnsregistration }}"
+      dnsfqdn: "${{ parameters.dnsfqdn }}"
+      dnsAction: "${{ parameters.dnsAction }}"
+      owner: "${{ parameters.owner }}"
+      AppGWpublic: "${{ parameters.AppGWpublic }}"
+      dnsType: ${{ parameters.dnsType }}
+      sslAction: "${{ parameters.sslAction }}"
+      var_sslrequest: "${{ parameters.var_sslrequest }}"
+      sslfqdn: "${{ parameters.sslfqdn }}"
+      requester_email:  "${{ parameters.requester_email }}"
+      requester_dn:  "${{ parameters.requester_dn }}"
+      registration_request:  "${{ parameters.registration_request }}"
+      request_type:  "${{ parameters.request_type }}"
+      display_name:  "${{ parameters.display_name }}"
+      home_page:  "${{ parameters.home_page }}"
+      reply_page:  "${{ parameters.reply_page }}"
+      permission:  "${{ parameters.permission }}"
+      resourceGroup:  "${{ parameters.resourceGroup }}"
+      app_id: "${{ parameters.app_id }}"
+      app_environment: "${{ parameters.app_environment }}"
+      #ad_groups: "${{ parameters.ad_groups }}"
+      update_key: "${{ parameters.update_key }}"
+      domainName: "${{ parameters.domainName }}"

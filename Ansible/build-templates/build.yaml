@@ -1,0 +1,13 @@
+jobs:
+- job: Build
+  steps:
+    # - task: PublishPipelineArtifact@1
+    #   inputs:
+    #     targetPath: '$(Pipeline.Workspace)/scripts' 
+    #     artifactName: scripts
+    - task: PublishPipelineArtifact@1
+      inputs:
+        #targetPath: '$(Pipeline.Workspace)'
+        targetPath: '$(Pipeline.Workspace)/arm-templates' 
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+        artifactName: arms

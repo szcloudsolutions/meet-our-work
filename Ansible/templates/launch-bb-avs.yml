@@ -1,0 +1,44 @@
+parameters:
+- name: name
+  type: string
+- name: bbName
+  type: string
+- name: customCondition
+  type: string
+  default: " "
+- name: displayName
+  type: string
+- name: templateId
+  type: string
+- name: inputs
+  type: object
+  default: {}
+- name: castInts
+  type: boolean
+  default: true
+
+
+steps:
+- task: PowerShell@2
+  displayName: Generate BB parameters
+  condition: and(succeeded(), '${{ parameters.customCondition }}')
+  inputs:
+    filePath: "scripts/Generate-BBParams.ps1"
+    arguments: >
+      -action 'Create'
+      -extravars $('${{ convertToJson(parameters.inputs) }}' | ConvertFrom-Json)
+      -castInts $([System.Convert]::ToBoolean('${{ parameters.castInts }}'))
+      
+- task: PowerShell@2
+  displayName: ${{ parameters.displayName }}
+  name: ${{ parameters.name }}
+  condition: and(succeeded(), '${{ parameters.customCondition }}')
+  inputs:
+    filePath: "scripts/Deploy-BB.ps1"
+    arguments: >
+      -user '$(var_atUser)'
+      -secret '$(var_atSecret)'
+      -templateId '${{ parameters.templateId }}'
+      -vars '$(params)'
+      -credentials '[571, 1, $(var_credentialsId)]'
+      -bbName '${{ parameters.bbName }}'

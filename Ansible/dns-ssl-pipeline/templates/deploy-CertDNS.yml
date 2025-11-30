@@ -1,0 +1,131 @@
+parameters:
+- name: serviceConnection
+  type: string
+- name: environment
+  type: string
+- name: var_keyVaultName
+  type: string
+- name: var_dnsregistration
+  type: boolean
+- name: dnsfqdn
+  type: string
+- name: dnsAction
+  type: string
+- name: dnsType
+  type: string
+- name: owner
+  type: string
+- name: AppGWpublic
+  type: string
+- name: var_sslrequest
+  type: boolean
+- name: sslAction
+  type: string
+- name: sslfqdn
+  type: string
+- name: requester_email
+  type: string
+- name: requester_dn
+  type: string
+- name: domainName
+  type: string
+- name: registration_request
+  type: boolean
+- name: request_type
+  type: string
+- name: display_name
+  type: string
+- name: home_page
+  type: string
+- name: reply_page
+  type: string
+- name: permission
+  type: string
+- name: resourceGroup
+  type: string
+- name: app_id
+  type: string
+- name: app_environment
+  type: string
+#- name: ad_groups
+#  type: string
+- name: update_key
+  type: string
+
+
+jobs:
+ # Add SSL Team management SPN to Access Policies in KV
+  - job: SSLConfig
+    displayName: SSL management action
+    condition: eq('${{ parameters.var_sslrequest }}', 'true')
+    steps:
+
+      - task: AzureCLI@2
+        displayName: Grant managed identity access for SSL mgmt action
+        inputs:
+          azureSubscription: "${{ parameters.serviceConnection }}"
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az keyvault set-policy -n ${{ parameters.var_keyVaultName }} --certificate-permissions get import list --secret-permissions get set list --object-id $(var_ssl_identity)
+
+    #Run SSL management operation
+
+      - task: PowerShell@2
+        displayName: SSL Certificate task
+        inputs:
+          filePath: 'dns-ssl-pipeline/scripts/SSL-Cert-request.ps1'
+          arguments: '-ansibleUser $env:AT_USER -ansibleSecret $env:AT_SECRET -deploymentId $env:DEP_ID -sslfqdn "${{ parameters.sslfqdn }}" -keyvault "${{ parameters.var_keyVaultName }}" -var_domainName "${{ parameters.domainName }}"  -sslAction "${{ parameters.sslAction }}" -environment "${{ parameters.environment }}"'
+        env:
+          AT_USER: "$(VAR_AT_USER)"
+          AT_SECRET: "$(VAR_AT_SECRET)"
+          DEP_ID: "$(var_deploymentId)"
+
+ #DNS record management job
+
+  - job: DNSRegistration
+    displayName: DNS Record Management Job
+    condition: eq('${{ parameters.var_dnsregistration }}', 'true')
+    dependsOn: SSLConfig
+    steps:
+
+  #DNS record management task
+      - task: PowerShell@2
+        displayName: DNS Record Management Task
+        inputs:
+          filePath: 'dns-ssl-pipeline/scripts/DNS-registration.ps1'
+          arguments: '-ansibleUser $env:AT_USER -ansibleSecret $env:AT_SECRET -deploymentId $env:DEP_ID -dnsfqdn "${{ parameters.dnsfqdn }}" -owner "${{ parameters.owner }}" -AppGWpublic "${{ parameters.AppGWpublic }}" -dnsAction "${{ parameters.dnsAction }}" -dnsType "${{ parameters.dnsType }}"'
+        env:
+          AT_USER: "$(VAR_AT_USER)"
+          AT_SECRET: "$(VAR_AT_SECRET)"
+          DEP_ID: "$(var_deploymentId)"
+
+
+  - job: WebAppRegistrationAllParam
+    displayName: Web App Registration
+    condition: eq('${{ parameters.registration_request }}', 'true')
+    steps:
+
+      #Configuring access policies
+      - task: AzureCLI@2
+        displayName: Grant managed identity access for Registration action
+        condition: eq('${{ parameters.request_type }}', 'create-update')
+        inputs:
+          azureSubscription: "${{ parameters.serviceConnection }}"
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az keyvault set-policy -n ${{ parameters.var_keyVaultName }} --certificate-permissions get import list --secret-permissions get set list --object-id $(var_tower_identity)
+
+
+       #Script connecting to Tower for registration
+      - task: PowerShell@2
+        displayName: Web App Registration Task
+        inputs:
+          filePath: 'dns-ssl-pipeline/scripts/webapp-registration.ps1'
+          arguments: '-ansibleUser $env:AT_USER -ansibleSecret $env:AT_SECRET -requester_email "${{ parameters.requester_email }}" -requester_dn "${{ parameters.requester_dn }}" -request_type "${{ parameters.request_type }}" -display_name "${{ parameters.display_name }}" -home_page "${{ parameters.home_page }}" -reply_page "${{ parameters.reply_page }}" -permission "${{ parameters.permission }}" -keyVault "${{ parameters.var_keyVaultName }}" -resourceGroup "${{ parameters.resourceGroup }}" -subscription_id "$(var_azure_rm_subid)" -app_id "${{ parameters.app_id }}" -app_environment "${{ parameters.app_environment }}" -update_key: "${{ parameters.update_key }}"      ' # -ad_groups "${{ parameters.ad_groups }}"
+        env:
+          AT_USER: "$(VAR_AT_USER)"
+          AT_SECRET: "$(VAR_AT_SECRET)"
+
+

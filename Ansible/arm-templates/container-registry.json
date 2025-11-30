@@ -1,0 +1,64 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "RegistryName": {
+            "type": "String"
+        },
+        "environment": {
+            "type": "string"
+        },
+        "engagementId": {
+            "type": "string"
+        },
+        "deploymentId": {
+            "type": "string"
+        },
+        "owner": {
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ContainerRegistry/registries",
+            "apiVersion": "2019-12-01-preview",
+            "name": "[parameters('RegistryName')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+            "ENVIRONMENT": "[parameters('environment')]",
+            "ENGAGEMENT_ID": "[parameters('engagementId')]",
+            "OWNER": "[parameters('owner')]",
+            "DEPLOYMENT_ID": "[parameters('deploymentId')]",
+            "SETUP": "True"
+            },
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "properties": {
+                "adminUserEnabled": true,
+                "policies": {
+                    "quarantinePolicy": {
+                        "status": "disabled"
+                    },
+                    "trustPolicy": {
+                        "type": "Notary",
+                        "status": "disabled"
+                    },
+                    "retentionPolicy": {
+                        "days": 7,
+                        "status": "disabled"
+                    }
+                },
+                "encryption": {
+                    "status": "disabled"
+                },
+                "dataEndpointEnabled": false
+            }
+        }
+    ]
+}
+
+
+

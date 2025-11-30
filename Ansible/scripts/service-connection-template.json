@@ -1,0 +1,22 @@
+{
+    "data": {
+        "authorizationType": "Kubeconfig",
+        "acceptUntrustedCerts": "true"
+    },
+    "id": null,
+    "name": "Kubeconfig-{AKS_NAME}",
+    "type": "kubernetes",
+    "url": "https://{AKS_URL}",
+    "createdBy": null,
+    "description": "",
+    "authorization": {
+        "parameters": {
+            "kubeConfig": "{KUBECONFIG}"
+        },
+        "scheme": "Kubernetes"
+    },
+    "isShared": false,
+    "isReady": true,
+    "owner": "library",
+    "serviceEndpointProjectReferences": null
+}

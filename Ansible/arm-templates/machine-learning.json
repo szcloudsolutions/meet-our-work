@@ -1,0 +1,104 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "type": "string"
+        },
+        "environment": {
+            "type": "string"
+        },
+        "deploymentId": {
+            "type": "string"
+        },
+        "engagementId": {
+            "type": "string"
+        },
+        "owner": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string"
+        },
+        "identityType": {
+            "type": "string",
+            "defaultValue": "systemAssigned"
+        },
+        "storageAccountOption": {
+            "type": "string",
+            "defaultValue": "existing"
+        },
+        "storageAccountName": {
+            "type": "string"
+        },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS"
+        },
+        "keyVaultOption": {
+            "type": "string",
+            "defaultValue": "existing"
+        },
+        "keyVaultName": {
+            "type": "string"
+        },
+        "applicationInsightsOption": {
+            "type": "string",
+            "defaultValue": "existing"
+        },
+        "applicationInsightsName": {
+            "type": "string"
+        },
+        "containerRegistryOption": {
+            "type": "string",
+            "defaultValue": "existing"
+        },
+        "containerRegistryName": {
+            "type": "string"
+        },
+        "containerRegistrySku": {
+            "type": "string",
+            "defaultValue": "Basic"
+        },
+        "adbWorkspace": {
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('workspaceName')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+            "ENVIRONMENT": "[parameters('environment')]",
+            "ENGAGEMENT_ID": "[parameters('engagementId')]",
+            "OWNER": "[parameters('owner')]",
+            "DEPLOYMENT_ID": "[parameters('deploymentId')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
+                "[resourceId('Microsoft.Insights/components', parameters('applicationInsightsName'))]",
+                "[resourceId('Microsoft.ContainerRegistry/registries', parameters('containerRegistryName'))]"
+            ],
+            "identity": {
+                "type": "[parameters('identityType')]",
+                "userAssignedIdentities": "[if(equals(parameters('identityType'), 'userAssigned'), variables('userAssignedIdentities'), json('null'))]"
+            },
+            "sku": {
+                "tier": "[parameters('sku')]",
+                "name": "[parameters('sku')]"
+            },
+            "properties": {
+                "friendlyName": "[parameters('workspaceName')]",
+                "storageAccount": "[parameters('storageAccountName')]",
+                "keyVault": "[parameters('keyVaultName')]",
+                "applicationInsights": "[parameters('applicationInsightsName')]",
+                "containerRegistry": "[if(not(equals(parameters('containerRegistryOption'), 'none')), parameters('containerRegistryName'), json('null'))]",
+                "primaryUserAssignedIdentity": "[if(equals(parameters('identityType'), 'userAssigned'), variables('primaryUserAssignedIdentity'), json('null'))]"
+            }
+        }
+    ]
+}

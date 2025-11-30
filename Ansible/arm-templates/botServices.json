@@ -1,0 +1,102 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    
+    "parameters": {
+        "cognitiveServiceName": {
+            "type": "string"
+        },
+        "environment": {
+            "type": "string"
+        },
+        "engagementId": {
+            "type": "string"
+        },
+        "deploymentId": {
+            "type": "string"
+        },
+        "owner": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string"
+        },
+        //"endpoint": {
+        //    "type": "string"
+        //},
+        //"msaAppId": {
+        //    "type": "string"
+        //}
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.BotService/botServices",
+            "apiVersion": "2020-06-02",
+            "name": "[parameters('cognitiveServiceName')]",
+            "location": "global",
+            "tags": {
+                "ENVIRONMENT": "[parameters('environment')]",  
+                "ENGAGEMENT_ID": "[parameters('engagementId')]",
+                "OWNER": "[parameters('owner')]",
+                "DEPLOYMENT_ID": "[parameters('deploymentId')]"
+            },
+            "sku": {
+                "name": "[parameters('sku')]"
+            },
+            "kind": "sdk",
+            "properties": {
+                "displayName": "[parameters('cognitiveServiceName')]",
+                "iconUrl": "https://docs.botframework.com/static/devportal/client/images/bot-framework-default.png",
+               // "endpoint": "https://euwdvnbdevwap02.azurewebsites.net/api/messages",
+               // "msaAppId": "[parameters('msaAppId')]",
+                "luisAppIds": [],
+                "isCmekEnabled": false
+            }
+        },
+        {
+            "type": "Microsoft.BotService/botServices/channels",
+            "apiVersion": "2020-06-02",
+            "name": "[concat(parameters('cognitiveServiceName'), '/DirectLineChannel')]",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('Microsoft.BotService/botServices', parameters('cognitiveServiceName'))]"
+            ],
+            "properties": {
+                "properties": {
+                    "sites": [
+                        {
+                            "siteName": "Default",
+                            "isEnabled": true,
+                            "isV1Enabled": true,
+                            "isV3Enabled": true,
+                            "isSecureSiteEnabled": false
+                        }
+                    ]
+                },
+                "channelName": "DirectLineChannel"
+            }
+        },
+        {
+            "type": "Microsoft.BotService/botServices/channels",
+            "apiVersion": "2020-06-02",
+            "name": "[concat(parameters('cognitiveServiceName'), '/WebChatChannel')]",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('Microsoft.BotService/botServices', parameters('cognitiveServiceName'))]"
+            ],
+            "properties": {
+                "properties": {
+                    "sites": [
+                        {
+                            "siteName": "Default Site",
+                            "isEnabled": true,
+                            "enablePreview": true
+                        }
+                    ]
+                },
+                "channelName": "WebChatChannel"
+            }
+        }
+    ]
+}

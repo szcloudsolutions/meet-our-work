@@ -1,0 +1,41 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "staticname": {
+            "type": "string"
+        },
+        "environment": {
+            "type": "string"
+        },
+        "engagementId": {
+            "type": "string"
+        },
+        "deploymentId": {
+            "type": "string"
+        },
+        "owner": {
+            "type": "string"
+        }
+
+    },
+    "resources": [
+        {
+            "apiVersion": "2021-01-01",
+            "name": "[parameters('staticname')]",
+            "location": "eastus2",
+            "tags": {
+                "ENGAGEMENT_ID": "[parameters('engagementId')]",
+                "DEPLOYMENT_ID": "[parameters('deploymentId')]",
+                "OWNER": "[parameters('owner')]",
+                "ENVIRONMENT": "[parameters('environment')]"
+            },
+            "type": "Microsoft.Web/staticSites",
+            "properties": {},
+            "sku": {
+                "Tier": "Standard",
+                "Name": "Standard"
+            }
+        }
+    ]
+}

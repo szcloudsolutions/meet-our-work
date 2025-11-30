@@ -1,0 +1,41 @@
+variables:
+  #credentials: $(credentials)
+  #var_towerInfraTemplateId: ""
+  # var_omsResourceGroup: $(var_omsResourceGroup)
+  # var_omsSubscriptionId: $(var_omsSubscriptionId)
+  # var_omsWorkspaceName: $(var_omsWorkspaceName)
+  # var_omsWorkspaceKey: $(var_omsWorkspaceKey)
+  var_logAnalyticsResourceId: "/subscriptions/$(var_omsSubscriptionId)/resourcegroups/$(var_omsResourceGroup)/providers/Microsoft.OperationalInsights/workspaces/$(var_omsWorkspaceName)"
+  var_appServicePlanId: "/subscriptions/$(var_subscriptionId)/resourcegroups/$(var_resourceGroupName)/providers/Microsoft.Web/serverfarms/$(var_appServicePlanName)"
+  var_appServicePlan2Id: "/subscriptions/$(var_subscriptionId)/resourcegroups/$(var_resourceGroupName)/providers/Microsoft.Web/serverfarms/$(var_appServicePlan2Name)"
+  var_appServicePlan3Id: "/subscriptions/$(var_subscriptionId)/resourcegroups/$(var_resourceGroupName)/providers/Microsoft.Web/serverfarms/$(var_appServicePlan3Name)"
+  var_appServicePlan4Id: "/subscriptions/$(var_subscriptionId)/resourcegroups/$(var_resourceGroupName)/providers/Microsoft.Web/serverfarms/$(var_appServicePlan4Name)"
+  var_appServicePlan5Id: "/subscriptions/$(var_subscriptionId)/resourcegroups/$(var_resourceGroupName)/providers/Microsoft.Web/serverfarms/$(var_appServicePlan5Name)"
+  #var_storageAccountId: "/subscriptions/$(var_subscriptionId)/resourcegroups/$(var_resourceGroupName)/providers/Microsoft.Storage/storageAccounts/$(var_storageAccount2Name)"
+  var_storageAccountId: "/subscriptions/$(var_subscriptionId)/resourcegroups/$(var_resourceGroupName)/providers/Microsoft.Storage/storageAccounts/$(var_storageAccountName)"
+  var_keyvaultId: "/subscriptions/$(var_subscriptionId)/resourcegroups/$(var_resourceGroupName)/providers/Microsoft.KeyVault/vaults/$(var_keyVaultName)"
+  # var_azure_rm_subid: $(var_subscriptionId)
+  # var_subscriptionId: $(var_subscriptionId)
+  # var_tenantId: $(var_tenantId)
+  # var_chargeCode: $(var_chargeCode)
+  # var_deploymentId: $(var_deploymentId)
+  # var_productApp: $(var_productApp)
+  # var_ipamOrganization: "CoDev"
+  # var_owner_tag: $(var_owner)
+  # VAR_SPN_ID: $(var_devSpnId)
+  # VAR_SPN_SECRET: $(var_devSpnSecret)
+  # VAR_AT_USER: $(var_atUser)
+  # VAR_AT_SECRET: $(var_atSecret)
+  var_sqladminname: $(var_sqladmindevname)
+  var_sqladminpass: $(var_sqladmindevpass)
+  var_ipamLocation: $(var_ipamLocation)
+  var_ipRangeName: $(var_ipRangeName)
+  var_virtualNetworkName: $(var_virtualNetworkName)
+  var_subnetName: $(var_subnetName)
+  var_subnetVMName: $(var_subnetVMName)
+  var_subnet3Name: $(var_subnet3Name)
+  var_subnetWAFName: $(var_subnetWAFName)
+  var_networkSecurityGroupName: $(var_networkSecurityGroupName)
+  var_synapseAnalyticsApacheSparkName: $(var_synapseAnalyticsApacheSparkName)
+  var_synapseAnalyticsApacheSparkName2: $(var_synapseAnalyticsApacheSparkName2)
+  #var_synapseAnalyticsApacheSparkName2:

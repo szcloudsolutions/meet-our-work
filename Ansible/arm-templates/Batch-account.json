@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "batchAccountName": {
+            "type": "String"
+        },
+        "environment": {
+            "type": "string"
+        },
+        "engagementId": {
+            "type": "string"
+        },
+        "deploymentId": {
+            "type": "string"
+        },
+        "owner": {
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Batch/batchAccounts",
+            "apiVersion": "2022-06-01",
+            "name": "[parameters('batchAccountName')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "ENGAGEMENT_ID": "[parameters('engagementId')]",
+                "DEPLOYMENT_ID": "[parameters('deploymentId')]",
+                "OWNER": "[parameters('owner')]",
+                "ENVIRONMENT": "[parameters('environment')]"
+            },
+            "identity": {
+                "type": "None"
+            },
+            "properties": {
+                "poolAllocationMode": "BatchService",
+                "publicNetworkAccess": "Enabled",
+                "networkProfile": {
+                    "accountAccess": {
+                        "defaultAction": "Allow"
+                    }
+                },
+                "encryption": {
+                    "keySource": "Microsoft.Batch"
+                },
+                "allowedAuthenticationModes": [
+                    "SharedKey",
+                    "AAD",
+                    "TaskAuthenticationToken"
+                ]
+            }
+        }
+    ]
+}

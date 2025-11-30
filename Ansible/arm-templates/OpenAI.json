@@ -1,0 +1,60 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string"
+        },
+        "openaiproject": {
+            "type": "string"
+        },
+        "environment": {
+            "type": "string"
+        },
+        "engagementId": {
+            "type": "string"
+        },
+        "openaiengagementId": {
+            "type": "string"
+        },
+        "deploymentId": {
+            "type": "string"
+        },
+        "owner": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2022-03-01",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "type": "Microsoft.CognitiveServices/accounts",
+            "kind": "OpenAI",
+            "tags": {
+                "ENGAGEMENT_ID": "[parameters('engagementId')]",
+                "DEPLOYMENT_ID": "[parameters('deploymentId')]",
+                "OWNER": "[parameters('owner')]",
+                "ENVIRONMENT": "[parameters('environment')]",
+                "OPENAI_PROJECT": "[parameters('openaiproject')]",
+                "OPENAI_ENGAGEMENT_ID": "[parameters('openaiengagementId')]"
+            },
+            "sku": {
+                "name": "[parameters('sku')]"
+            },
+            "identity": {
+                "type": "None"
+            },
+            "properties": {
+                "customSubDomainName": "[toLower(parameters('name'))]"
+            }
+        }
+    ]
+}

@@ -1,0 +1,496 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: 'windows-latest'
+
+parameters:
+- name: environment
+  displayName: "Environment"
+  type: string
+  default: Development
+  values:
+  - Development
+  - Production
+
+- name: serviceConnection
+  displayName: "Azure Service Connection"
+  type: string
+  default: AZURE.NON-PROD
+  values:
+  - AZURE.NON-PROD
+  - AZURE.PROD
+
+- name: owner
+  displayName: "DevOps Owner"
+  type: string
+  default: IT-XXXXXXXXXXXXXXX-Team
+  values:
+  - IT-XXXXXXXXXXXXXXX-Team
+
+- name: location
+  displayName: "Location"
+  type: string
+  default: germanywestcentral
+  values:
+  - germanywestcentral
+
+- name: resourceGroup
+  displayName: "Deploy Resource Group?"
+  type: boolean
+  default: false
+
+- name: resourceGroupName
+  displayName: "RG name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: keyVault
+  displayName: "Deploy Key Vault?"
+  type: boolean
+  default: false
+
+- name: keyVaultName
+  displayName: "Key Vault name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: appInsights
+  displayName: "Deploy Application Insights?"
+  type: boolean
+  default: false
+
+- name: appInsightsName
+  displayName: "App Insights name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: datalakestorage
+  displayName: "Deploy Data Lake Storage Account Premium for Synapse?"
+  type: boolean
+  default: false
+
+- name: datalakestorageName
+  displayName: "Data Lake Storage Account name Premium for Synapse (if it already exists)"
+  type: string
+  default: ' '
+
+- name: datalakestorage2
+  displayName: "Deploy Data Lake Storage Account Standard for Synapse?"
+  type: boolean
+  default: false
+
+- name: datalakestorage2Name
+  displayName: "Data Lake Storage Account name Standard for Synapse (if it already exists)"
+  type: string
+  default: ' '
+
+- name: storageAccount
+  displayName: "Deploy Storage Account for Functions?"
+  type: boolean
+  default: false
+
+- name: storageAccountName
+  displayName: "Storage Account name for Functions (if it already exists)"
+  type: string
+  default: ' '
+
+- name: storageAccount2
+  displayName: "Deploy Storage Account for SQL?"
+  type: boolean
+  default: false
+
+- name: storageAccount2Name
+  displayName: "Storage Account name for SQL (if it already exists)"
+  type: string
+  default: ' '
+
+- name: sqlServer
+  displayName: "Deploy SQL Server?"
+  type: boolean
+  default: false
+
+- name: sqlServerName
+  displayName: "SQL Server name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: sqlServer2
+  displayName: "Deploy SQL Server2?"
+  type: boolean
+  default: false
+
+- name: sqlServer2Name
+  displayName: "SQL Server2 name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: sqlElasticPool
+  displayName: "Deploy SQL Elastic Pool?"
+  type: boolean
+  default: false
+
+- name: sqlElasticPoolName
+  displayName: "SQL ElasticPool name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: sqlDB
+  displayName: "Deploy SQL database? (needed SQL server Name if not deploy in this run)"
+  type: boolean
+  default: false
+
+- name: sqlDB2
+  displayName: "Deploy SQL database 2? (needed SQL server Name if not deploy in this run)"
+  type: boolean
+  default: false
+
+# - name: sqlDB3
+#   displayName: "Deploy SQL database 3? (needed SQL server Name if not deploy in this run)"
+#   type: boolean
+#   default: false
+
+- name: appServicePlan
+  displayName: "Deploy App Service Plan EP1 for Function App?"
+  type: boolean
+  default: false
+
+- name: appServicePlanName
+  displayName: "Function App Service Plan name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: function1
+  displayName: "Deploy Function App1 with EP1 Tier "
+  type: boolean
+  default: false
+
+- name: function2
+  displayName: "Deploy Function App2 with EP1 Tier?"
+  type: boolean
+  default: false
+
+- name: appServicePlan2
+  displayName: "Deploy App Service2 Plan EP1 for Function App?"
+  type: boolean
+  default: false
+
+- name: appServicePlan2Name
+  displayName: "Function App Service Plan EP1 name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: function3
+  displayName: "Deploy Function App3 with EP1 Tier?"
+  type: boolean
+  default: false
+
+- name: appServicePlan3
+  displayName: "Deploy App Service3 Plan Premium for Function App?"
+  type: boolean
+  default: false
+
+- name: appServicePlan3Name
+  displayName: "Function App Service Plan Premium Name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: function4
+  displayName: "Deploy Function App4 with Premium Tier?"
+  type: boolean
+  default: false
+
+- name: appServicePlan4
+  displayName: "Deploy Linux App Service Plan S3 for Web Apps?"
+  type: boolean
+  default: false
+
+- name: appServicePlan4Name
+  displayName: "Web Apps App Service Plan Name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: webapp
+  displayName: "Deploy Web App?"
+  type: boolean
+  default: false
+
+- name: webapp2
+  displayName: "Deploy Web App2?"
+  type: boolean
+  default: false
+
+- name: appServicePlan5
+  displayName: "Deploy Windows App Service Plan S3 for Web Apps?"
+  type: boolean
+  default: false
+
+- name: appServicePlan5Name
+  displayName: "Web Apps App Service Plan Name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: webapp3
+  displayName: "Deploy Web App3?"
+  type: boolean
+  default: false
+
+- name: appServicePlan6
+  displayName: "Deploy Windows App Service Plan S2 for Web Apps?"
+  type: boolean
+  default: false
+
+- name: appServicePlan6Name
+  displayName: "Web Apps App Service Plan Name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: webapp4
+  displayName: "Deploy Web App4?"
+  type: boolean
+  default: false
+
+- name: synapse
+  displayName: "Deploy Synapse Workspace?"
+  type: boolean
+  default: false
+
+- name: synapseName
+  displayName: "Synapse Workspace Name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: spark
+  displayName: "Deploy Apache Spark for Synapse Workspace?"
+  type: boolean
+  default: false
+
+- name: spark2
+  displayName: "Deploy Apache Spark 2 for Synapse Workspace?"
+  type: boolean
+  default: false
+
+- name: vnet
+  displayName: "Deploy vNet?"
+  type: boolean
+  default: false
+
+- name: vnetName
+  displayName: "vNet name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: subnet
+  displayName: "Deploy subnet for C4C/CPM?"
+  type: boolean
+  default: false
+
+- name: subnetName
+  displayName: "Subnet name for C4C/CPM (if it already exists)"
+  type: string
+  default: ' '
+
+- name: subnet2
+  displayName: "Deploy subnet 2 for MDM/PACE?"
+  type: boolean
+  default: false
+
+- name: subnet2Name
+  displayName: "Subnet 2 name for MDM/PACE (if it already exists)"
+  type: string
+  default: ' '
+
+- name: subnet3
+  displayName: "Deploy subnet 3 for NAT/CPY?"
+  type: boolean
+  default: false
+
+- name: subnet3Name
+  displayName: "Subnet 3 name for NAT/CPY (if it already exists)"
+  type: string
+  default: ' '
+
+- name: subnet4
+  displayName: "Deploy subnet 4 for Error Handling?"
+  type: boolean
+  default: false
+
+- name: subnet4Name
+  displayName: "Subnet 4 name for Error Handling (if it already exists)"
+  type: string
+  default: ' '
+
+- name: subnet5
+  displayName: "Deploy subnet 5 for Service Buses?"
+  type: boolean
+  default: false
+
+- name: subnet5Name
+  displayName: "Subnet 5 name for Service Buses (if it already exists)"
+  type: string
+  default: ' '
+
+- name: subnetWAF
+  displayName: "Deploy subnet WAF?"
+  type: boolean
+  default: false
+
+- name: subnetWAFName
+  displayName: "Subnet WAF name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: nsg
+  displayName: "Deploy NSG?"
+  type: boolean
+  default: false
+
+- name: nsgName
+  displayName: "NSG name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: servicebusprem
+  displayName: "Deploy Service Bus Premium?"
+  type: boolean
+  default: false
+
+- name: servicebusprem2
+  displayName: "Deploy Service Bus Premium 2?"
+  type: boolean
+  default: false
+
+- name: RSVresourceGroup
+  displayName: "Deploy RSV Resource Group?"
+  type: boolean
+  default: false
+
+- name: RSVresourceGroupName
+  displayName: "Recovery Vault RG name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: recoveryVault
+  displayName: "Deploy Recovery Vault?"
+  type: boolean
+  default: false
+
+- name: recoveryVaultName
+  displayName: "Recovery Vault name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: availabilitySet
+  displayName: "Deploy Availability Set for VM?"
+  type: boolean
+  default: false
+
+- name: availabilitySetName
+  displayName: "Availability Set name (if it already exists)"
+  type: string
+  default: ' '
+
+- name: vmwindows
+  displayName: "Deploy Vm Windows?"
+  type: boolean
+  default: false
+
+- name: appGateway
+  displayName: "Deploy App Gateway?"
+  type: boolean
+  default: false
+
+variables:
+- ${{ if eq(parameters.environment, 'Development') }}:
+  - template: variables/vars_dev2.yml
+  - group: Azure.NON-PROD
+  - group: OMS.NON-PROD
+- ${{ if eq(parameters.environment, 'Production') }}:
+  - template: variables/vars_prod.yml
+  - group: Azure.PROD
+  - group: OMS.PROD
+
+
+#-------Stages----------
+stages:
+- stage: "${{ parameters.environment }}"
+  jobs:
+  - template: templates/deploy-infra.yml
+    parameters:
+      serviceConnection: "${{ parameters.serviceConnection }}"
+      environment: "${{ parameters.environment }}"
+      owner: "${{ parameters.owner }}"
+      location: "${{ parameters.location }}"
+      resourceGroup: "${{ parameters.resourceGroup }}"
+      resourceGroupName: "${{ parameters.resourceGroupName }}"
+      keyVault: "${{ parameters.keyVault }}"
+      keyVaultName: "${{ parameters.keyVaultName }}"
+      appInsights: "${{ parameters.appInsights }}"
+      appInsightsName: "${{ parameters.appInsightsName }}"
+      storageAccount: "${{ parameters.storageAccount }}"
+      storageAccountName: "${{ parameters.storageAccountName }}"
+      storageAccount2: "${{ parameters.storageAccount2 }}"
+      storageAccount2Name: "${{ parameters.storageAccount2Name }}"
+      datalakestorage: "${{ parameters.datalakestorage }}"
+      datalakestorageName: "${{ parameters.datalakestorageName }}"
+      datalakestorage2: "${{ parameters.datalakestorage2 }}"
+      datalakestorage2Name: "${{ parameters.datalakestorage2Name }}"
+      appServicePlan: "${{ parameters.appServicePlan }}"
+      appServicePlanName: "${{ parameters.appServicePlanName }}"
+      function1: "${{ parameters.function1 }}"
+      function2: "${{ parameters.function2 }}"
+      appServicePlan2: "${{ parameters.appServicePlan2 }}"
+      appServicePlan2Name: "${{ parameters.appServicePlan2Name }}"
+      function3: "${{ parameters.function3 }}"
+      appServicePlan3: "${{ parameters.appServicePlan3 }}"
+      appServicePlan3Name: "${{ parameters.appServicePlan3Name }}"
+      function4: "${{ parameters.function4 }}"
+      appServicePlan4: "${{ parameters.appServicePlan4 }}"
+      appServicePlan4Name: "${{ parameters.appServicePlan4Name }}"
+      webapp: "${{ parameters.webapp }}"
+      webapp2: "${{ parameters.webapp2 }}"
+      appServicePlan5: "${{ parameters.appServicePlan5 }}"
+      appServicePlan5Name: "${{ parameters.appServicePlan5Name }}"
+      webapp3: "${{ parameters.webapp3 }}"
+      appServicePlan6: "${{ parameters.appServicePlan6 }}"
+      appServicePlan6Name: "${{ parameters.appServicePlan6Name }}"
+      webapp4: "${{ parameters.webapp4 }}"
+      sqlServer: "${{ parameters.sqlServer }}"
+      sqlServerName: "${{ parameters.sqlServerName }}"
+      sqlServer2: "${{ parameters.sqlServer2 }}"
+      sqlServer2Name: "${{ parameters.sqlServer2Name }}"
+      sqlElasticPool: "${{ parameters.sqlElasticPool }}"
+      sqlElasticPoolName: "${{ parameters.sqlElasticPoolName }}"
+      sqlDB: "${{ parameters.sqlDB }}"
+      sqlDB2: "${{ parameters.sqlDB2 }}"
+    #  sqlDB3: "${{ parameters.sqlDB3 }}"
+      synapse: "${{ parameters.synapse }}"
+      synapseName: "${{ parameters.synapseName }}"
+      spark: "${{ parameters.spark }}"
+      spark2: "${{ parameters.spark2 }}"
+      servicebusprem: "${{ parameters.servicebusprem }}"
+      servicebusprem2: "${{ parameters.servicebusprem2 }}"
+      vnet: "${{ parameters.vnet }}"
+      vnetName: "${{ parameters.vnetName }}"
+      subnet: "${{ parameters.subnet }}"
+      subnetName: "${{ parameters.subnetName }}"
+      subnet2: "${{ parameters.subnet2 }}"
+      subnet2Name: "${{ parameters.subnet2Name }}"
+      subnet3: "${{ parameters.subnet3 }}"
+      subnet3Name: "${{ parameters.subnet3Name }}"
+      subnet4: "${{ parameters.subnet4 }}"
+      subnet4Name: "${{ parameters.subnet4Name }}"
+      subnet5: "${{ parameters.subnet5 }}"
+      subnet5Name: "${{ parameters.subnet5Name }}"
+      subnetWAF: "${{ parameters.subnetWAF }}"
+      subnetWAFName: "${{ parameters.subnetWAFName }}"
+      nsg: "${{ parameters.nsg }}"
+      nsgName: "{{ parameters.nsgName }}"
+      RSVresourceGroup: "${{ parameters.RSVresourceGroup }}"
+      RSVresourceGroupName: "${{ parameters.RSVresourceGroupName }}"
+      recoveryVault: "${{ parameters.recoveryVault }}"
+      recoveryVaultName: "${{ parameters.recoveryVaultName }}"
+      availabilitySet: "${{ parameters.availabilitySet }}"
+      availabilitySetName: "${{ parameters.availabilitySetName }}"
+      vmwindows: "${{ parameters.vmwindows }}"
+      appGateway: "${{ parameters.appGateway }}"

@@ -1,0 +1,1323 @@
+parameters:
+- name: serviceConnection
+  type: string
+- name: environment
+  type: string
+- name: owner
+  type: string
+- name: location
+  type: string
+- name: resourceGroup
+  type: boolean
+- name: resourceGroupName
+  type: string
+- name: keyVault
+  type: boolean
+- name: keyVaultName
+  type: string
+- name: appInsights
+  type: boolean
+- name: appInsightsName
+  type: string
+- name: storageAccount
+  type: boolean
+- name: storageAccountName
+  type: string
+- name: storageAccount2
+  type: boolean
+- name: storageAccount2Name
+  type: string
+- name: datalakestorage
+  type: boolean
+- name: datalakestorageName
+  type: string
+- name: datalakestorage2
+  type: boolean
+- name: datalakestorage2Name
+  type: string
+- name: appServicePlan
+  type: boolean
+- name: appServicePlanName
+  type: string
+- name: function1
+  type: boolean
+- name: function2
+  type: boolean  
+- name: appServicePlan2
+  type: boolean
+- name: appServicePlan2Name
+  type: string
+- name: function3
+  type: boolean
+- name: appServicePlan3
+  type: boolean
+- name: appServicePlan3Name
+  type: string
+- name: function4
+  type: boolean
+- name: appServicePlan4
+  type: boolean
+- name: appServicePlan4Name
+  type: string
+- name: webapp
+  type: boolean
+- name: webapp2
+  type: boolean
+- name: appServicePlan5
+  type: boolean
+- name: appServicePlan5Name
+  type: string
+- name: webapp3
+  type: boolean
+- name: appServicePlan6
+  type: boolean
+- name: appServicePlan6Name
+  type: string
+- name: webapp4
+  type: boolean
+- name: sqlServer
+  type: boolean
+- name: sqlServerName
+  type: string
+- name: sqlServer2
+  type: boolean
+- name: sqlServer2Name
+  type: string
+- name: sqlElasticPool
+  type: boolean
+- name: sqlElasticPoolName
+  type: string
+- name: sqlDB
+  type: boolean
+- name: sqlDB2
+  type: boolean
+# - name: sqlDB3
+  # type: boolean
+- name: synapse
+  type: boolean
+- name: synapseName
+  type: string
+- name: spark
+  type: boolean
+- name: spark2
+  type: boolean 
+- name: servicebusprem
+  type: boolean
+- name: servicebusprem2
+  type: boolean
+- name: subnet
+  type: boolean
+- name: subnetName
+  type: string
+- name: subnet2
+  type: boolean
+- name: subnet2Name
+  type: string
+- name: subnet3
+  type: boolean
+- name: subnet3Name
+  type: string
+- name: subnet4
+  type: boolean
+- name: subnet4Name
+  type: string
+- name: subnet5
+  type: boolean
+- name: subnet5Name
+  type: string
+- name: subnetWAF
+  type: boolean
+- name: subnetWAFName
+  type: string
+- name: vnet
+  type: boolean
+- name: vnetName
+  type: string
+- name: nsg
+  type: boolean
+- name: nsgName
+  type: string
+- name: RSVresourceGroup
+  type: boolean
+- name: RSVresourceGroupName
+  type: string
+- name: recoveryVault
+  type: boolean
+- name: recoveryVaultName
+  type: string
+- name: availabilitySet
+  type: boolean
+- name: availabilitySetName
+  type: string
+- name: vmwindows
+  type: boolean
+- name: appGateway
+  type: boolean
+
+
+
+
+jobs:
+- deployment: Provisioning
+  environment: "${{ parameters.environment }}"
+  timeoutInMinutes: 0
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - checkout: self
+
+        #Set var_owner - var_environment - var_location
+        - bash: |
+            echo "##vso[task.setvariable variable=var_owner]${{ parameters.owner }}"
+            echo "##vso[task.setvariable variable=var_environment]${{ parameters.environment }}"
+            echo "##vso[task.setvariable variable=var_location]${{ parameters.location }}"
+          displayName: Set vars
+
+        - ${{ if ne( parameters.resourceGroup , 'true') }}:
+          - ${{ if ne( parameters.resourceGroupName , ' ') }}:
+        #Save Resource Group Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_resourceGroupName]"${{ parameters.resourceGroupName }}""
+              displayName: Get RSG name
+
+        - ${{ else }}:
+        #Deploy Resource Group
+          - template: launch-bb.yml
+            parameters:
+              displayName: Create Resource Group
+              name: RG1
+              bbName: resource-group
+              templateId: "10636" #prod-bb-create-resource-group-V2.0.1
+
+        #Save Resource Group Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_resourceGroupName]"$(RG1.name)""
+            displayName: Set RSG name created
+
+        - ${{ if ne( parameters.keyVault, 'true') }}:
+          - ${{ if ne( parameters.keyVaultName , ' ') }}:
+        #Save Key Vault Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_keyVaultName]"${{ parameters.keyVaultName }}""
+              displayName: Get Key Vault name
+
+        - ${{ else }}:
+        #Create Key Vault
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Key Vault
+              name: AKV1
+              bbName: key-vault
+              templateId: "11575" #prod-bb-create-key-vault-V2.1.0
+              inputs:
+                var_tier: "premium"
+                var_skipEndpointConfig: true
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_objectsIdsAccess:
+                - "55726aae-be51-4030-b828-5a96cedfa146"
+                #var_objectsIdsAccess: "['55726aae-be51-4030-b828-5a96cedfa146']"
+                #var_objectsIdsAccess: "['$(Azure.SATTeamGroupID)']"
+                
+                #var_objectsIdsAccess: "$(Azure.SATTeamGroupID)" test it
+
+        #Save Key Vault Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_keyVaultName]"$(AKV1.name)""
+            displayName: Set Key vault name created
+
+        - ${{ if ne( parameters.datalakestorage , 'true') }}:
+          - ${{ if ne( parameters.datalakestorageName , ' ') }}:
+        #Save Data Lake Storage Group Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_datalakestorageName]"${{ parameters.datalakestorageName }}""
+              displayName: Get Data Lake Storage name
+
+        - ${{ else }}:
+        #Create Data Lake Storage Account
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Data Lake Storage Account Premium for Synapse
+              name: ADLS1
+              bbName: data-lake-store-gen2
+              templateId: "12895" #prod-bb-create-data-lake-store-gen2-V3.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_dataLakeStorageSkuName: "Premium_LRS"
+                var_dataLakeStorageKind: "BlockBlobStorage"
+                #var_dataLakeStorageSkuName: "Standard_LRS"
+                #var_dataLakeStorageKind: "StorageV2"
+                var_dataLakeStorageAccessTier: "Hot"
+                var_skipEndpointConfigSa: true
+                var_fileEncryptionEnabled: true
+                var_blobEncryptionEnabled: true
+                var_enableSoftDelete: true
+
+        #Save Data Lake Storage Account2 name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_datalakestorageName]"$(ADLS1.name)""
+            displayName: Set Data Lake Storage Account name created
+
+        - ${{ if ne( parameters.datalakestorage2 , 'true') }}:
+          - ${{ if ne( parameters.datalakestorage2Name , ' ') }}:
+        #Save Data Lake Storage Group Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_datalakestorage2Name]"${{ parameters.datalakestorage2Name }}""
+              displayName: Get Data Lake Storage Account2 name
+
+        - ${{ else }}:
+        #Create Data Lake Storage Account
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Data Lake Storage Account2 Standard for Synapse
+              name: ADLS2
+              bbName: data-lake-store-gen2
+              templateId: "12895" #prod-bb-create-data-lake-store-gen2-V3.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_dataLakeStorageSkuName: "Standard_LRS"
+                var_dataLakeStorageKind: "StorageV2"
+                var_dataLakeStorageAccessTier: "Hot"
+                var_skipEndpointConfigSa: true
+                var_fileEncryptionEnabled: true
+                var_blobEncryptionEnabled: true
+                var_enableSoftDelete: true
+
+        #Save Data Lake Storage Account name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_datalakestorage2Name]"$(ADLS2.name)""
+            displayName: Set Data Lake Storage Account2 name created
+
+        #Create Storage Account
+        - ${{ if ne( parameters.storageAccount , 'true') }}:
+          - ${{ if ne( parameters.storageAccountName , ' ') }}:
+        #Save Storage Group Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_storageAccountName]"${{ parameters.storageAccountName }}""
+              displayName: Get Storage name
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Hot Storage Account for Functions
+              name: SA1
+              bbName: storage-account
+              templateId: "11847" #prod-bb-create-storage-account-V3.0.2
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_storageAccountSku: "Standard_LRS"
+                var_storageAccountKind: "StorageV2"
+                var_storageAccountAccessTier: "Hot"
+                var_skipEndpointConfigSa: true
+                var_fileEncryptionEnabled: true
+                var_blobEncryptionEnabled: true
+                var_enableSoftDelete: true
+
+        #Save Storage Account name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_storageAccountName]"$(SA1.name)""
+            displayName: Set Storage Account name created
+        
+        #Create Storage Account
+        - ${{ if ne( parameters.storageAccount2 , 'true') }}:
+          - ${{ if ne( parameters.storageAccount2Name , ' ') }}:
+        #Save Storage Group Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_storageAccount2Name]"${{ parameters.storageAccount2Name }}""
+              displayName: Get Storage name2
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Hot Storage Account for SQL
+              name: SA2
+              bbName: storage-account
+              templateId: "11847" #prod-bb-create-storage-account-V3.0.2
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_storageAccountSku: "Standard_LRS"
+                var_storageAccountKind: "StorageV2"
+                var_storageAccountAccessTier: "Hot"
+                var_skipEndpointConfigSa: true
+                var_fileEncryptionEnabled: true
+                var_blobEncryptionEnabled: true
+                var_enableSoftDelete: true
+
+        #Save Storage Account name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_storageAccount2Name]"$(SA2.name)""
+            displayName: Set Storage Account 2 name created
+
+        - ${{ if ne( parameters.appInsights , 'true') }}:
+          - ${{ if ne( parameters.appInsightsName , ' ') }}:
+        #Save App Insights Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_appInsightsName]"${{ parameters.appInsightsName }}""
+              displayName: Get App Insights name
+
+        - ${{ else }}:
+        # Create App Insights
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy App Insights
+              name: APPIN
+              bbName: app-insights
+              templateId: "13218" #prod-bb-create-app-insights-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+
+        #Save App Insights Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_appInsightsName]"$(APPIN.name)""
+            displayName: Set App Insights name
+
+        - ${{ if ne( parameters.sqlServer , 'true') }}:
+          - ${{ if ne( parameters.sqlServerName , ' ') }}:
+        #Save SQL Server Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_sqlServerName]"${{ parameters.sqlServerName }}""
+              displayName: Get SQLServer name
+
+        - ${{ else }}:
+        #Create Sql Server
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy SQL Server
+              name: SQLServer
+              bbName: sql-server
+              templateId: "11891" #prod-bb-create-sql-server-V2.3.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_keyVaultName: "$(var_keyVaultName)"
+                var_skipEndpointConfig: true
+                var_storageAccountId: "$(var_storageAccount2Id)"
+
+        #Save Sql Server Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_sqlServerName]"$(SQLServer.name)""
+            displayName: Set SQL server name
+
+        - ${{ if ne( parameters.sqlServer2 , 'true') }}:
+          - ${{ if ne( parameters.sqlServer2Name , ' ') }}:
+        #Save SQL Server Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_sqlServer2Name]"${{ parameters.sqlServer2Name }}""
+              displayName: Get SQLServer2 name
+
+        - ${{ else }}:
+        #Create Sql Server
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy SQL Server2
+              name: SQLServer2
+              bbName: sql-server
+              templateId: "11891" #prod-bb-create-sql-server-V2.3.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_keyVaultName: "$(var_keyVaultName)"
+                var_skipEndpointConfig: true
+                var_storageAccountId: "$(var_storageAccount2Id)"
+
+        #Save Sql Server Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_sqlServer2Name]"$(SQLServer2.name)""
+            displayName: Set SQL server2 name
+
+        - ${{ if ne( parameters.sqlElasticPool , 'true') }}:
+          - ${{ if ne( parameters.sqlElasticPoolName , ' ') }}:
+        #Save SQL Server Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_elasticPoolName]"${{ parameters.sqlElasticPoolName }}""
+              displayName: Get SQL Elastic Pool name
+
+        - ${{ else }}:
+        #Create Sql Server
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy SQL Elastic Pool
+              name: SQLElastic
+              bbName: sql-elastic-pool
+              templateId: "11612" #prod-bb-create-sql-elastic-pool-V2.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_keyVaultName: "$(var_keyVaultName)"
+                var_sqlServerName: "$(var_sqlServerName)"
+
+
+        #Save Sql Elastic Pool Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_elasticPoolName]"$(SQLElastic.name)""
+            displayName: Set SQL Elastic Pool name
+
+        # # Create SQL DB
+        - ${{ if eq(parameters.sqlDB, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy DataBase
+              name: SQLDB1
+              bbName: sql-database
+              templateId: "11949" #prodbbcreatesqldatabaseV310@1
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_serverName: "$(var_sqlServerName)"
+                #var_elasticPoolName: "$(var_elasticPoolName)"
+                var_createMode: "RestoreFromBacpac"
+                var_bacpacStorageAccountName: "$(var_storageAccount2Name)"
+                var_bacpacContainerName: "sqldatabasebackup"
+                var_bacpacFileName: "GWCPGLMCRMSDB02-2024-2-5-19-53.bacpac"
+                #var_azureBlobStorageUri: $(var_azureBlobStorageUri)
+                var_sqlServerAdminUserName: $(var_sqladminname)
+                var_sqlServerAdminPassword: $(var_sqladminpass)
+                var_dbSize: 1024
+                #var_dbName: ["$(var_dbName)"]
+
+
+        - ${{ if eq(parameters.sqlDB2, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy DataBase2
+              name: SQLDB2
+              bbName: sql-database
+              templateId: "11949" #prodbbcreatesqldatabaseV310@1
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_serverName: "$(var_sqlServer2Name)"
+                # var_createMode: "RestoreFromBacpac"
+                # var_bacpacStorageAccountName: "$(var_storageAccountdbName)"
+                # var_bacpacContainerName: "dbbacpac"
+                # var_bacpacFileName: "EUNDGLMCRMSDB01_SSIS.bacpac"
+                # var_sqlServerAdminUserName: $(var_sqladminname)
+                # var_sqlServerAdminPassword: $(var_sqladminpass)
+                # var_dbSize: 1024
+                # var_dbName: ["$(var_db2Name)"]
+
+        # - ${{ if eq(parameters.sqlDB3, 'true') }}:
+        #   - template: launch-bb.yml
+        #     parameters:
+        #       displayName: Deploy DataBase 3
+        #       name: SQLDB3
+        #       bbName: sql-database
+        #       templateId: "11949" #prodbbcreatesqldatabaseV310@1
+        #       inputs:
+        #         var_resourceGroupName: "$(var_resourceGroupName)"
+        #         var_serverName: "$(var_sqlServerName)"
+        #         var_createMode: "RestoreFromBacpac"
+        #         var_bacpacStorageAccountName: "$(var_storageAccount2Name)"
+        #         var_bacpacContainerName: "enudb2bacpac"
+        #         var_bacpacFileName: "EUNDGLMCRMSDB02-SSIS-Backup.bacpac"
+        #         var_sqlServerAdminUserName: $(var_sqladminname)
+        #         var_sqlServerAdminPassword: $(var_sqladminpass)
+        #         var_dbSize: 500
+              #  var_dbName: '["$(var_db2Name)"]'
+        
+        # #*** Function
+        - ${{ if ne( parameters.appServicePlan , 'true') }}:
+          - ${{ if ne( parameters.appServicePlanName , ' ') }}:
+        #Save App Service Plan Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_appServicePlanName]"${{ parameters.appServicePlanName }}""
+              displayName: Get App Service Plan name
+
+        - ${{ else }}:
+        #Create App Service Plan
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy App Service Plan
+              name: APPSP
+              bbName: app-service-plan
+              templateId: "11955" #prod-bb-create-app-service-plan-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_skuCode: "EP1"
+                var_numberOfWorkers: 1
+                var_applicationServicePlanOS: "windows"
+                var_enableServerless: false
+
+        # #Save App Service Plan Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_appServicePlanName]"$(APPSP.name)""
+            displayName: Set App Service Plan name
+        
+        - ${{ if eq(parameters.function1, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Function app
+              name: FNCTN1
+              bbName: azure-function-app
+              templateId: "12535" #prod-bb-create-azure-function-app-V5.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_storageAccountName: "$(var_storageAccountName)"
+                var_storageAccountId: "$(var_storageAccountId)"
+                #var_storageAccountKey: "$(var_storageAccountKey)"
+                var_appServicePlanName: "$(var_appServicePlanName)"
+                var_appInsightsName: "$(var_appInsightsName)"
+                var_appServicePlanId: "$(var_appServicePlanId)"
+                var_isLinuxFunction: no
+                var_serverless: false
+        
+        - ${{ if eq(parameters.function2, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Function app 2
+              name: FNCTN2
+              bbName: azure-function-app
+              templateId: "12535" #prod-bb-create-azure-function-app-V5.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_storageAccountName: "$(var_storageAccountName)"
+                var_storageAccountId: "$(var_storageAccountId)"
+                #var_storageAccountKey: "$(var_storageAccountKey)"
+                var_appServicePlanName: "$(var_appServicePlanName)"
+                var_appInsightsName: "$(var_appInsightsName)"
+                var_appServicePlanId: "$(var_appServicePlanId)"
+                var_isLinuxFunction: no
+                var_serverless: false
+
+        - ${{ if ne( parameters.appServicePlan2 , 'true') }}:
+          - ${{ if ne( parameters.appServicePlan2Name , ' ') }}:
+        #Save App Service Plan Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_appServicePlan2Name]"${{ parameters.appServicePlan2Name }}""
+              displayName: Get App Service Plan2 name
+
+        - ${{ else }}:
+        #Create App Service Plan
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy App Service Plan 2
+              name: APPSP2
+              bbName: app-service-plan
+              templateId: "11955" #prod-bb-create-app-service-plan-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_skuCode: "EP1"
+                var_numberOfWorkers: 1
+                var_applicationServicePlanOS: "windows"
+                var_enableServerless: false
+        #Save App Service Plan Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_appServicePlan2Name]"$(APPSP2.name)""
+            displayName: Set App Service Plan 2 name
+        
+        - ${{ if eq(parameters.function3, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Function app 3
+              name: FNCTN3
+              bbName: azure-function-app
+              templateId: "12535" #prod-bb-create-azure-function-app-V5.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_storageAccountName: "$(var_storageAccountName)"
+                var_storageAccountId: "$(var_storageAccountId)"
+                #var_storageAccountKey: "$(var_storageAccountKey)"
+                var_appServicePlanName: "$(var_appServicePlan2Name)"
+                var_appInsightsName: "$(var_appInsightsName)"
+                var_appServicePlanId: "$(var_appServicePlan2Id)"
+                var_serverless: false
+                var_isLinuxFunction: no
+
+        - ${{ if ne( parameters.appServicePlan3 , 'true') }}:
+          - ${{ if ne( parameters.appServicePlan3Name , ' ') }}:
+        #Save App Service Plan Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_appServicePlan3Name]"${{ parameters.appServicePlan3Name }}""
+              displayName: Get App Service Plan3 name
+
+        - ${{ else }}:
+        #Create App Service Plan
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy App Service Plan Premium
+              name: APPSP3
+              bbName: app-service-plan
+              templateId: "11955" #prod-bb-create-app-service-plan-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_skuCode: "P2V3"
+                var_numberOfWorkers: 1
+                var_applicationServicePlanOS: "windows"
+                var_enableServerless: false
+
+        #Save App Service Plan Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_appServicePlan3Name]"$(APPSP3.name)""
+            displayName: Set App Service Plan 3 name
+        
+
+        - ${{ if eq(parameters.function4, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Function app 4
+              name: FNCTN4
+              bbName: azure-function-app
+              templateId: "12535" #prod-bb-create-azure-function-app-V5.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_storageAccountName: "$(var_storageAccountName)"
+                var_storageAccountId: "$(var_storageAccountId)"
+                #var_storageAccountKey: "$(var_storageAccountKey)"
+                var_appServicePlanName: "$(var_appServicePlan3Name)"
+                var_appInsightsName: "$(var_appInsightsName)"
+                var_appServicePlanId: "$(var_appServicePlan3Id)"
+                var_serverless: false
+                var_isLinuxFunction: no
+
+        - ${{ if ne( parameters.appServicePlan4 , 'true') }}:
+          - ${{ if ne( parameters.appServicePlan4Name , ' ') }}:
+        #Save App Service Plan Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_appServicePlan4Name]"${{ parameters.appServicePlan4Name }}""
+              displayName: Get App Service Plan4 name
+
+        - ${{ else }}:
+        #Create App Service Plan
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy App Service Plan S3
+              name: APPSP4
+              bbName: app-service-plan
+              templateId: "11955" #prod-bb-create-app-service-plan-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_skuCode: "S3"
+                var_numberOfWorkers: 1
+                var_applicationServicePlanOS: "linux"
+                var_enableServerless: false
+
+        #Save App Service Plan Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_appServicePlan4Name]"$(APPSP4.name)""
+            displayName: Set App Service Plan 4 name
+        
+
+        - ${{ if eq(parameters.webapp, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Webapp
+              name: WAP
+              bbName: web-app
+              templateId: "12194" #prod-bb-create-web-app-V2.3.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_framework: "NODE|16-lts"
+                var_appServicePlanName: "$(var_appServicePlan4Name)"
+                var_appInsightsName: "$(var_appInsightsName)"
+                var_appServicePlanId: "$(var_appServicePlan4Id)"
+
+        - ${{ if eq(parameters.webapp2, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Webapp2
+              name: WAP2
+              bbName: web-app
+              templateId: "12194" #prod-bb-create-web-app-V2.3.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_framework: "NODE|16-lts"
+                var_appServicePlanName: "$(var_appServicePlan4Name)"
+                var_appInsightsName: "$(var_appInsightsName)"
+                var_appServicePlanId: "$(var_appServicePlan4Id)"
+
+        - ${{ if ne( parameters.appServicePlan5 , 'true') }}:
+          - ${{ if ne( parameters.appServicePlan5Name , ' ') }}:
+        #Save App Service Plan Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_appServicePlan5Name]"${{ parameters.appServicePlan5Name }}""
+              displayName: Get App Service Plan5 name
+
+        - ${{ else }}:
+        #Create App Service Plan
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy App Service Plan S1
+              name: APPSP5
+              bbName: app-service-plan
+              templateId: "11955" #prod-bb-create-app-service-plan-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_skuCode: "S1"
+                var_numberOfWorkers: 1
+                var_applicationServicePlanOS: "windows"
+                var_enableServerless: false
+
+        #Save App Service Plan Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_appServicePlan5Name]"$(APPSP5.name)""
+            displayName: Set App Service Plan 5 name
+
+        - ${{ if eq(parameters.webapp3, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Webapp
+              name: WAP3
+              bbName: web-app
+              templateId: "12194" #prod-bb-create-web-app-V2.3.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_framework: "node|16LTS"
+                var_appServicePlanName: "$(var_appServicePlan5Name)"
+                var_appInsightsName: "$(var_appInsightsName)"
+                var_appServicePlanId: "$(var_appServicePlan5Id)"
+
+        - ${{ if ne( parameters.appServicePlan6 , 'true') }}:
+          - ${{ if ne( parameters.appServicePlan6Name , ' ') }}:
+        #Save App Service Plan Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_appServicePlan6Name]"${{ parameters.appServicePlan6Name }}""
+              displayName: Get App Service Plan6 name
+
+        - ${{ else }}:
+        #Create App Service Plan
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy App Service Plan S2
+              name: APPSP6
+              bbName: app-service-plan
+              templateId: "11955" #prod-bb-create-app-service-plan-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_skuCode: "S2"
+                var_numberOfWorkers: 1
+                var_applicationServicePlanOS: "windows"
+                var_enableServerless: false
+
+        #Save App Service Plan Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_appServicePlan6Name]"$(APPSP6.name)""
+            displayName: Set App Service Plan 6 name
+
+        - ${{ if eq(parameters.webapp4, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Webapp
+              name: WAP4
+              bbName: web-app
+              templateId: "12194" #prod-bb-create-web-app-V2.3.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_framework: "ASPNET|V4.8"
+                var_appServicePlanName: "$(var_appServicePlan6Name)"
+                var_appInsightsName: "$(var_appInsightsName)"
+                var_appServicePlanId: "$(var_appServicePlan6Id)"
+
+        # Create Synapse Workspace
+        # Allow Public access in key vault because it will fail without it.
+        - ${{ if ne( parameters.synapse , 'true') }}:
+          - ${{ if ne( parameters.synapseName , ' ') }}:
+        #Save App Service Plan Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_workspaceName]"${{ parameters.synapseName }}""
+              displayName: Get Synapse Workspace Name
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Synapse Workspace
+              name: SYN
+              bbName: azure-synapse-workspace
+              templateId: "11925" #prod-bb-create-azure-synapse-workspace-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_storageAccountName: "$(var_datalakestorageName)"
+                var_storageLocation: "${{ parameters.location }}"
+                var_storageResourceGroupName: "$(var_resourceGroupName)"
+                var_storageSubscriptionID: "$(var_subscriptionId)"
+                var_defaultADLSFilesystemName: synapsecrm${{ parameters.environment }}2
+                var_defaultADLStorageAccountName: "$(var_datalakestorageName)"
+                var_defaultADLStorageAccountId: "$(var_datalakestorageId)"
+                var_keyVaultResourceId: "$(var_keyvaultId)"
+                var_keyVaultName: "$(var_keyVaultName)"
+                var_allowAllConnections: true
+          
+            #Save Workspace Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_workspaceName]"$(SYN.name)""
+            displayName: Set Workspace Name
+
+        - ${{ if eq( parameters.spark , 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Synapse Apache Spark
+              name: SYNSPARK
+              bbName: synapse-apache-spark
+              templateId: "12157" #prod-bb-create-azure-synapse-apache-spark-V2.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_synapseAnalyticsApacheSparkName: "$(var_synapseAnalyticsApacheSparkName)"
+                var_workspaceName: "$(var_workspaceName)"
+                var_sparkMinNodeCount: 5
+                var_sparkMaxNodeCount: 10
+                var_sparkNodeCount: 5
+                var_sparkNodeSize: "Small"
+                var_sparkAutoScaleEnabled: true
+                var_sparkVersion: "3.3"
+                var_sparkNodeSizeFamily: "MemoryOptimized"
+                var_sparkAutoPauseEnabled: true
+                var_sparkAutoPauseDelayInMinutes: 15
+
+        - ${{ if eq( parameters.spark2 , 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Synapse Apache Spark 2
+              name: SYNSPARK2
+              bbName: synapse-apache-spark
+              templateId: "12157" #prod-bb-create-azure-synapse-apache-spark-V2.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_synapseAnalyticsApacheSparkName: "$(var_synapseAnalyticsApacheSparkName2)"
+                var_workspaceName: "$(var_workspaceName)"
+                var_sparkMinNodeCount: 3
+                var_sparkMaxNodeCount: 5
+                var_sparkNodeCount: 3
+                var_sparkNodeSize: "Medium"
+                var_sparkAutoScaleEnabled: true
+                var_sparkVersion: "3.3"
+                var_sparkNodeSizeFamily: "MemoryOptimized"
+                var_sparkAutoPauseEnabled: true
+                var_sparkAutoPauseDelayInMinutes: 15
+        
+        #Virtual Network
+        - ${{ if ne( parameters.vnet , 'true') }}:
+          - ${{ if ne( parameters.vnetName , ' ') }}:
+        #Save Vnet Group Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_virtualNetworkName]"${{ parameters.vnetName }}""
+              displayName: Get Vnet name
+
+        - ${{ else }}:
+          # - task: PowerShell@2
+            # displayName: Generate IP range name
+            # inputs:
+              # filePath: 'Everest/scripts/Generate-Name.ps1'
+              # arguments: '-resource "IP Range" -variableName "var_ipRangeName" -environment "${{ parameters.environment }}" -product_name "GLM" -project_name "CRM" -region "${{ parameters.location }}" -spnID $env:SPN_ID -spnSecret $env:SPN_SECRET'
+            # env:
+              # SPN_ID: "$(VAR_SPN_ID)"
+              # SPN_SECRET: "$(VAR_SPN_SECRET)"
+        #Create IPrange for Virtual Network
+          # - task: ipam-api@1
+            # displayName: Create IP Range
+            # inputs:
+              # organization: "CoDev"
+              # ipRangeName: "$(var_ipRangeName)"
+              # region: "$(var_vNet.IpamRegion)"
+              # numberOfIp: "$(var_vnetRequiredIps)"
+
+        #Create Routable Virtual Network
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Virtual Network
+              name: VNET1
+              bbName: virtual-network
+              templateId: "8627" #prod-bb-create-virtual-network-V3.0.1
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_rolePurpose: "Virtual Network"
+                var_numberOfIps: "$(var_vnetRequiredIps)"
+                var_ipamOrganization: "CoDev"
+                var_ipamLocation: "$(var_ipamLocation)"
+                var_ipRangeName: "$(var_ipRangeName)"
+                var_virtualNetworkName: "$(var_virtualNetworkName)"
+                var_peer: "CoDev"
+
+        # #Save Virtual Network name
+          # - bash: |
+              # echo "##vso[task.setvariable variable=var_virtualNetworkName]"$(VNET1.name)""
+            # displayName: Set Virtual Network name created
+
+        - ${{ if ne( parameters.subnet , 'true') }}:
+          - ${{ if ne( parameters.subnetName , ' ') }}:
+        #Save Subnet Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_subnetName]"${{ parameters.subnetName }}""
+              displayName: Get Subnet Name
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Subnet
+              name: SBN
+              bbName: subnet
+              templateId: "11762" #prod-bb-create-subnet-V3.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_rolePurpose: "Virtual Network"
+                var_requiredIps: "$(var_Subnet.RequiredIps)"
+                var_ipamOrganization: "CoDev"
+                var_ipamLocation: "$(var_ipamLocation)"
+                var_subnetName: "$(var_subnetName)"
+                var_ipRangeName: "$(var_ipRangeName)"
+
+        # #Save Subnet name
+          # - bash: |
+              # echo "##vso[task.setvariable variable=var_subnetName]"$(SBN.name)""
+            # displayName: Set Subnet name created
+
+        - ${{ if ne( parameters.subnet2 , 'true') }}:
+          - ${{ if ne( parameters.subnet2Name , ' ') }}:
+        #Save Subnet Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_subnet2Name]"${{ parameters.subnet2Name }}""
+              displayName: Get Subnet 2 Name
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Subnet 2
+              name: SBN2
+              bbName: subnet
+              templateId: "11762" #prod-bb-create-subnet-V3.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_rolePurpose: "Virtual Network"
+                var_requiredIps: "$(var_subnet2.RequiredIps)"
+                var_ipamOrganization: "CoDev"
+                var_ipamLocation: "$(var_ipamLocation)"
+                var_subnetName: "$(var_subnet2Name)"
+                var_ipRangeName: "$(var_ipRangeName)"
+
+        - ${{ if ne( parameters.subnet3 , 'true') }}:
+          - ${{ if ne( parameters.subnet3Name , ' ') }}:
+        #Save Subnet Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_subnet3Name]"${{ parameters.subnet3Name }}""
+              displayName: Get Subnet 3 Name
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Subnet 3
+              name: SBN3
+              bbName: subnet
+              templateId: "11762" #prod-bb-create-subnet-V3.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_rolePurpose: "Virtual Network"
+                var_requiredIps: "$(var_Subnet3.RequiredIps)"
+                var_ipamOrganization: "CoDev"
+                var_ipamLocation: "$(var_ipamLocation)"
+                var_subnetName: "$(var_subnet3Name)"
+                var_ipRangeName: "$(var_ipRangeName)"
+
+        - ${{ if ne( parameters.subnet4 , 'true') }}:
+          - ${{ if ne( parameters.subnet4Name , ' ') }}:
+        #Save Subnet Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_subnet4Name]"${{ parameters.subnet4Name }}""
+              displayName: Get Subnet 4 Name
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Subnet 4
+              name: SBN4
+              bbName: subnet
+              templateId: "11762" #prod-bb-create-subnet-V3.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_rolePurpose: "Virtual Network"
+                var_requiredIps: "$(var_Subnet4.RequiredIps)"
+                var_ipamOrganization: "CoDev"
+                var_ipamLocation: "$(var_ipamLocation)"
+                var_subnetName: "$(var_subnet4Name)"
+                var_ipRangeName: "$(var_ipRangeName)"
+
+        - ${{ if ne( parameters.subnet5 , 'true') }}:
+          - ${{ if ne( parameters.subnet5Name , ' ') }}:
+        #Save Subnet Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_subnet5Name]"${{ parameters.subnet5Name }}""
+              displayName: Get Subnet 5 Name
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Subnet 5
+              name: SBN5
+              bbName: subnet
+              templateId: "11762" #prod-bb-create-subnet-V3.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_rolePurpose: "Virtual Network"
+                var_requiredIps: "$(var_Subnet5.RequiredIps)"
+                var_ipamOrganization: "CoDev"
+                var_ipamLocation: "$(var_ipamLocation)"
+                var_subnetName: "$(var_subnet5Name)"
+                var_ipRangeName: "$(var_ipRangeName)"
+        
+        - ${{ if ne( parameters.subnetWAF , 'true') }}:
+          - ${{ if ne( parameters.subnetWAFName , ' ') }}:
+        #Save Subnet Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_subnetWAFName]"${{ parameters.subnetWAFName }}""
+              displayName: Get Subnet WAF Name
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Subnet WAF
+              name: SBNWAF
+              bbName: subnet
+              templateId: "11762" #prod-bb-create-subnet-V3.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_rolePurpose: "Virtual Network"
+                var_requiredIps: "$(var_SubnetWAF.RequiredIps)"
+                var_ipamOrganization: "CoDev"
+                var_ipamLocation: "$(var_ipamLocation)"
+                var_subnetName: "$(var_subnetWAFName)"
+                var_ipRangeName: "$(var_ipRangeName)"
+
+
+        # #Save Subnet name
+          # - bash: |
+              # echo "##vso[task.setvariable variable=var_subnet2Name]"$(SBNVM.name)""
+            # displayName: Set Subnet VM name created
+
+        - ${{ if ne( parameters.nsg , 'true') }}:
+          - ${{ if ne( parameters.nsgName , ' ') }}:
+        #Save NSG Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_nsgName]"${{ parameters.nsgName }}""
+              displayName: Get NSG Name
+
+        - ${{ else }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy NSG
+              name: NSG
+              bbName: network-security-group
+              templateId: "8482" #prod-bb-create-network-security-group-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_rolePurpose: "Virtual Network"
+                var_ipamOrganization: "CoDev"
+                var_ipamLocation: "$(var_ipamLocation)"
+                var_networkSecurityGroupName: "$(var_networkSecurityGroupName)"
+                additional_param: >-
+                  '{"var_subnetNameList": ["$(var_subnetName)"]}'
+                #  , ["$(var_subnet2Name)"] }'
+
+        #Create Service Bus
+        - ${{ if eq(parameters.servicebusprem, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Service Bus Premium
+              name: SBUS1
+              bbName: service-bus
+              templateId: "11959" #prod-bb-create-service-bus-V2.2.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                #var_ipamOrganization: "CoDev"
+                #var_firewallAllowSubnetName: "$(var_subnet5Name)"
+                var_tier: Premium
+
+        - ${{ if eq(parameters.servicebusprem2, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Service Bus Premium2
+              name: SBUS2
+              bbName: service-bus
+              templateId: "11959" #prod-bb-create-service-bus-V2.2.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_ipamOrganization: "CoDev"
+                var_firewallAllowSubnetName: "$(var_subnet5Name)"
+                var_tier: Premium
+
+        - ${{ if ne( parameters.RSVresourceGroup , 'true') }}:
+            - ${{ if ne( parameters.RSVresourceGroupName , ' ') }}:
+          #Save RSV resource Group Name
+              - bash: |
+                  echo "##vso[task.setvariable variable=var_RSVresourceGroupName]"${{ parameters.RSVresourceGroupName }}""
+                displayName: Get RSV RSG name
+
+        - ${{ else }}:
+        #Saving RSV RSG name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_RSVresourceGroupName]"$(var_resourceGroupName)_RSV""
+            displayName: Generate RSV RSG name
+
+        #Deploy RSV Resource Group
+          - template: launch-bb.yml
+            parameters:
+              displayName: Create RSV Resource Group
+              name: RSVRG1
+              bbName: resource-group
+              templateId: "10636" #prod-bb-create-resource-group-V2.0.1
+              inputs:
+                var_resourceGroupName: "$(var_RSVresourceGroupName)"
+
+        - ${{ if ne( parameters.recoveryVault , 'true') }}:
+          - ${{ if ne( parameters.recoveryVaultName , ' ') }}:
+        #Save RSV Name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_recoveryVaultName]"${{ parameters.recoveryVaultName }}""
+              displayName: Get RSV name
+
+        - ${{ else }}:
+        #Deploy RSV
+          - template: launch-bb.yml
+            parameters:
+              displayName: Create Recovery Services Vault
+              name: RSV1
+              bbName: recovery-vault
+              templateId: "12383" #prod-bb-create-recovery-vault-V2.0.0
+              inputs:
+                var_resourceGroupName: "$(var_RSVresourceGroupName)"
+
+        #Save RSV Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_recoveryVaultName]"$(RSV1.name)""
+            displayName: Set RSV RSG name created
+
+        - ${{ if ne( parameters.availabilitySet , 'true') }}:
+          - ${{ if ne( parameters.availabilitySetName , ' ') }}:
+        #Save Availability Set name
+            - bash: |
+                echo "##vso[task.setvariable variable=var_availabilitySetName]"${{ parameters.availabilitySetName }}""
+              displayName: Get Availability Set name
+
+        - ${{ else }}:
+        #Create Availability Set
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy Availability Set
+              name: AVS1
+              bbName: availability-set
+              templateId: "9931" #prod-bb-create-availability-set-V2.1.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_rolePurpose: 'Availability Set for App Server'
+
+        #Save Availability Set name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_availabilitySetName]"$(AVS1.name)""
+            displayName: Set Availability Set name
+
+        #Create Windows VM
+        - ${{ if eq(parameters.vmwindows, 'true') }}:
+          - template: launch-bb.yml
+            parameters:
+              displayName: 'Deploy Windows VM'
+              name: WVM
+              bbName: vm-windows
+              templateId: "11886" #prod-bb-create-vm-windows-V3.3.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_ipamOrganization: CoDev
+                var_ipamLocation: $(var_ipamLocation)
+                var_rolePurpose: App Server
+                var_subnetName: $(var_subnetName)
+                var_computerSize: $(var_computerSize)
+                var_osDiskStorageType: $(var_osDiskStorageType)
+                var_dataDiskStorageType: $(var_dataDiskStorageType)
+                var_dataDrivesList: [$(var_dataDrivesList)]
+                var_enableCentralizedAD: false
+                var_availabilitySetName: $(var_availabilitySetName)
+                var_recoveryServicesVaultName: $(var_recoveryVaultName)
+                var_recoveryServicesVaultResourceGroupName: $(var_RSVresourceGroupName)
+                var_domainJoin: false
+                var_imageReferenceSku: "2019-Datacenter"
+                var_logAnalyticsResourceId: $(var_logAnalyticsResourceId)
+                var_omsMyWorkSpaceId: $(var_omsMyWorkSpaceId)
+                var_omsMyWorkspaceKey: $(var_omsMyWorkspaceKey)
+                var_subnetId: "$(var_subnetId)"
+              #  additional_param: >- 
+              #     {"var_omsMyWorkSpaceId": "$(var_omsMyWorkSpaceId)", "var_omsMyWorkspaceKey": "$(var_omsMyWorkspaceKey)", "var_logAnalyticsResourceId": "$(var_logAnalyticsResourceId)", "var_subnetId": "$(var_subnetId)"}
+
+        #Save Windows VM Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_vmName]"$(WVM.name)""
+            displayName: Set Windows VM name
+
+        - ${{ if eq(parameters.appGateway, 'true') }}:
+          # - task: PowerShell@2
+          #     displayName: SSL Certificate task
+          #     inputs:
+          #       filePath: '$(Pipeline.Workspace)/scripts/SSL-Cert-request.ps1'
+          #       arguments: '-ansibleUser $env:AT_USER -ansibleSecret $env:AT_SECRET -deploymentId $env:DEP_ID -sslfqdn "${{ parameters.sslfqdn }}" -keyvault "${{ parameters.var_keyVaultName }}" -var_domainName "${{ parameters.domainName }}"  -sslAction "${{ parameters.sslAction }}" -certificate_owner "${{ parameters.certificate_owner }}" -environment "${{ parameters.environment }}"'
+          #     env:
+          #       AT_USER: "$(var_atUser)"
+          #       AT_SECRET: "$(var_atSecret)"
+          #       DEP_ID: "$(var_deploymentId)"
+
+          # - task: AzurePowerShell@5
+          #   displayName: Wait for Certificate replication
+          #   inputs:
+          #     azureSubscription: "${{ parameters.serviceConnection }}"
+          #     ScriptType: 'InlineScript'
+          #     Inline: 'Start-Sleep -s 300'
+          #     azurePowerShellVersion: 'LatestVersion'
+
+          - task: AzureCLI@2
+            name: uicerturl
+            inputs:
+              azureSubscription: "${{ parameters.serviceConnection }}"
+              scriptType: ps
+              scriptLocation: 'scriptPath'
+              scriptPath: "scripts/Get-KeyVaultCertSecretURL_v2.ps1"
+              arguments: > 
+                -VaultName "$(var_keyVaultName)"
+                -CertName "$(var_urlFromKeyVault)"
+                -CertVariableName "$(UICertVariableName)"
+
+          # - task: AzureCLI@2
+            # displayName: Dissociate NSG from App Gw subnet
+            # inputs:
+              # azureSubscription: "${{ parameters.serviceConnection }}"
+              # scriptType: ps
+              # scriptLocation: inlineScript
+              # inlineScript: |
+                # az network vnet subnet update -g "$(var_resourceGroupName)" -n "$(var_subnetName)" --vnet-name "$(var_virtualNetworkName)" --network-security-group '""'
+
+        #Create public IP Name for application gateway
+          # - task: PowerShell@2
+          #   displayName: Generate Public IP name
+          #   inputs:
+          #     filePath: 'scripts/Generate-Name.ps1'
+          #     arguments: '-resource "Public IP" -variableName "var_publicIpName" -environment "${{ parameters.environment }}" -product_name "GLM" -project_name "CRM" -region "${{ parameters.location }}" -spnID $env:SPN_ID -spnSecret $env:SPN_SECRET'
+          #   env:
+          #     SPN_ID: "$(var_devSpnId)"
+          #     SPN_SECRET: "$(var_devSpnSecret)"
+
+        #Create Application gateway
+          - template: launch-bb.yml
+            parameters:
+              displayName: Deploy App Gateway
+              name: APPGW
+              bbName: application-gateway-waf-v2
+              templateId: "10783" #prod-bb-create-application-gateway-waf-v2-V3.0.0
+              inputs:
+                var_resourceGroupName: "$(var_resourceGroupName)"
+                var_domainNameLabel: "$(domainNameLabel)"
+                var_vipName: "$(var_publicIpName)"
+                var_virtualNetworkName: "$(var_virtualNetworkName)"
+                var_ipamOrganization: CoDev
+                var_createCName: false
+                var_subnetId: "/subscriptions/$(var_subscriptionId)/resourceGroups/$(var_resourceGroupName)/providers/Microsoft.Network/virtualNetworks/$(var_virtualNetworkName)/subnets/$(var_subnetWAFName)"
+                #var_routes: '[{"backendAddresses": ["$(getipaddresses.VMIP)"]}]'
+              #  var_routes: '[{"backendAddresses": ["${{ parameters.backendAddress }}"]}]'
+                # {"var_routes": [{"backendAddresses": ["$(getipaddresses.VMIP)"],"keyVaultCertificateSecretId": "$(uicerturl.UICertVar)"}]}
+              #  additional_param: >-                
+                var_routes: [{"backendAddresses": ["$(backendAddress)"],"keyVaultCertificateSecretId": "$(uicerturl.UICertVar)"}]
+        #Save Application Gateway Name
+          - bash: |
+              echo "##vso[task.setvariable variable=var_appGatewayName]"$(APPGW.name)""
+            displayName: Set App Gateway name
+          
+        #   - task: PowerShell@2
+              # displayName: DNS Record Management Task
+              # inputs:
+              #   filePath: '$(Pipeline.Workspace)/scripts/DNS-registration.ps1'
+              #   arguments: '-ansibleUser $env:AT_USER -ansibleSecret $env:AT_SECRET -deploymentId $env:DEP_ID -dnsfqdn "${{ parameters.dnsfqdn }}" -owner "${{ parameters.owner }}"  -owner_group "${{ parameters.owner_group }}" -AppGWpublic "${{ parameters.AppGWpublic }}" -dnsAction "${{ parameters.dnsAction }}" -dnsType "${{ parameters.dnsType }}"'
+              # env:
+              #   AT_USER: "$(var_atUser)"
+              #   AT_SECRET: "$(var_atSecret)"
+              #   DEP_ID: "$(var_deploymentId)"
+        
+
+
+
+
